@@ -136,13 +136,6 @@ class ClientImportController extends Controller
             ['John Smith', 'john.smith@example.com', '+1-555-0101', 'Acme Corporation', 'Lead'],
             ['Sarah Johnson', 'sarah.j@example.com', '+1-555-0102', 'Tech Solutions Inc', 'Active'],
             ['Michael Brown', 'michael.b@example.com', '+1-555-0103', 'Global Services', 'Active'],
-            ['Emily Davis', 'emily.d@example.com', '+1-555-0104', 'Creative Agency', 'Lead'],
-            ['David Wilson', 'david.w@example.com', '+1-555-0105', 'Manufacturing Co', 'Inactive'],
-            ['Lisa Anderson', 'lisa.a@example.com', '+1-555-0106', 'Digital Marketing Pros', 'Active'],
-            ['Robert Taylor', 'robert.t@example.com', '+1-555-0107', 'IT Consulting Group', 'Lead'],
-            ['Jennifer Martinez', 'jennifer.m@example.com', '+1-555-0108', 'Healthcare Plus', 'Active'],
-            ['William Thompson', 'william.t@example.com', '+1-555-0109', 'Financial Services LLC', 'Inactive'],
-            ['Maria Garcia', 'maria.g@example.com', '+1-555-0110', 'Education First', 'Lead'],
         ];
 
         $callback = function() use ($headers, $sampleData) {

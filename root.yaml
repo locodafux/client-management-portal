@@ -1,9 +1,8 @@
-# render.yaml
 services:
   - type: web
     name: client-management-portal
     runtime: php
-    region: oregon
+    region: singapore  # Choose closest to you: oregon, frankfurt, singapore
     plan: free
     buildCommand: |
       composer install --no-dev --optimize-autoloader
@@ -21,7 +20,7 @@ services:
       - key: APP_DEBUG
         value: false
       - key: APP_KEY
-        generateValue: true
+        sync: false
       - key: QUEUE_CONNECTION
         value: database
       - key: DB_CONNECTION
@@ -30,7 +29,7 @@ services:
   - type: worker
     name: queue-worker
     runtime: php
-    region: oregon
+    region: singapore
     plan: free
     buildCommand: composer install --no-dev --optimize-autoloader
     startCommand: php artisan queue:work --tries=3 --sleep=3 --max-time=3600
@@ -47,3 +46,4 @@ databases:
     plan: free
     databaseName: client_management
     user: client_user
+    ipAllowList: [] # Allow all IPs
