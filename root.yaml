@@ -1,16 +1,11 @@
+# render.yaml
 services:
   - type: web
     name: client-management-portal
     runtime: php
-    region: singapore  # Choose closest to you: oregon, frankfurt, singapore
+    region: singapore
     plan: free
-    buildCommand: |
-      composer install --no-dev --optimize-autoloader
-      npm install
-      npm run build
-      php artisan config:cache
-      php artisan route:cache
-      php artisan view:cache
+    buildCommand: ./render-build.sh
     startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
       - key: APP_NAME
@@ -42,8 +37,9 @@ services:
         value: mysql
 
 databases:
-  - name: client-management-db
+  - type: mysql
+    name: client-management-db
     plan: free
     databaseName: client_management
     user: client_user
-    ipAllowList: [] # Allow all IPs
+    ipAllowList: []
