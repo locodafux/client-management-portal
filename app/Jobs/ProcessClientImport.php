@@ -20,8 +20,8 @@ class ProcessClientImport implements ShouldQueue
     protected $import;
     protected $filePath;
 
-    public $tries = 5; // Increase retry attempts
-    public $backoff = 3; // Wait 3 seconds between retries
+    public $tries = 5;
+    public $backoff = 3;
 
     public function __construct(Import $import, $filePath)
     {
@@ -34,46 +34,37 @@ class ProcessClientImport implements ShouldQueue
         try {
             $this->import->update(['status' => 'Processing']);
 
-            // Use Storage facade to check file
-            $fullPath = Storage::disk('local')->path($this->filePath);
+            // Check if file exists with multiple attempts
+            $fullPath = $this->waitForFile();
             
-            Log::info('Job attempting to process file', [
+            if (!$fullPath) {
+                throw new \Exception("File not found after multiple attempts: " . $this->filePath);
+            }
+
+            Log::info('Processing import file', [
                 'import_id' => $this->import->id,
-                'file_path' => $this->filePath,
-                'full_path' => $fullPath,
-                'disk_exists' => Storage::disk('local')->exists($this->filePath) ? 'YES' : 'NO',
-                'file_exists' => file_exists($fullPath) ? 'YES' : 'NO'
+                'file_path' => $fullPath,
+                'file_size' => filesize($fullPath)
             ]);
 
-            // Try multiple times with delay (sometimes filesystem is slow)
-            $attempts = 0;
-            while (!Storage::disk('local')->exists($this->filePath) && $attempts < 5) {
-                $attempts++;
-                Log::warning("File not found, attempt {$attempts}/5, waiting...");
-                sleep(1);
-            }
-
-            if (!Storage::disk('local')->exists($this->filePath)) {
-                throw new \Exception("File not found after {$attempts} attempts: " . $this->filePath);
-            }
-
-            // Get the full path for Excel import
-            $fullPath = Storage::disk('local')->path($this->filePath);
-            
+            // Process the file
             $importHandler = new QueuedClientsImport($this->import);
             Excel::import($importHandler, $fullPath);
 
+            // Update with results
             $this->import->update([
                 'status' => 'Completed',
                 'imported_count' => $importHandler->getImportedCount(),
                 'skipped_count' => $importHandler->getSkippedCount(),
             ]);
 
-            // Optionally delete file after successful import
+            // Clean up file
             Storage::disk('local')->delete($this->filePath);
             
-            Log::info('Import completed successfully', [
-                'import_id' => $this->import->id
+            Log::info('Import completed', [
+                'import_id' => $this->import->id,
+                'imported' => $importHandler->getImportedCount(),
+                'skipped' => $importHandler->getSkippedCount()
             ]);
 
         } catch (\Exception $e) {
@@ -85,12 +76,31 @@ class ProcessClientImport implements ShouldQueue
             Log::error('Import failed', [
                 'import_id' => $this->import->id,
                 'error' => $e->getMessage(),
-                'file_path' => $this->filePath,
-                'trace' => $e->getTraceAsString()
+                'file_path' => $this->filePath
             ]);
 
-            // Re-throw to trigger retry
             throw $e;
         }
+    }
+
+    /**
+     * Wait for file to be available (handles slow filesystems)
+     */
+    private function waitForFile()
+    {
+        $attempts = 0;
+        $maxAttempts = 10;
+        
+        while ($attempts < $maxAttempts) {
+            if (Storage::disk('local')->exists($this->filePath)) {
+                return Storage::disk('local')->path($this->filePath);
+            }
+            
+            $attempts++;
+            Log::warning("Waiting for file, attempt {$attempts}/{$maxAttempts}");
+            sleep(2); // Wait 2 seconds between checks
+        }
+        
+        return null;
     }
 }

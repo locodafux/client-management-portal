@@ -1,4 +1,5 @@
 services:
+  # Your web service - spins down after inactivity (FREE)
   - type: web
     name: client-management-portal
     runtime: docker
@@ -6,7 +7,6 @@ services:
     region: singapore
     plan: free
     autoDeploy: true
-
     envVars:
       - key: APP_ENV
         value: production
@@ -16,16 +16,69 @@ services:
         generateValue: true
       - key: QUEUE_CONNECTION
         value: database
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromDatabase:
+          name: client-management-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: client-management-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: client-management-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: client-management-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: client-management-db
+          property: password
 
-  - type: worker
+  # CRON JOB for queue processing (CHEAPEST option!)
+  - type: cron
     name: client-management-queue
     runtime: docker
     dockerfilePath: ./Dockerfile.worker
     region: singapore
     plan: free
-
+    schedule: "*/5 * * * *"  # Every 5 minutes (cheaper than every minute)
     envVars:
       - key: APP_ENV
         value: production
       - key: QUEUE_CONNECTION
         value: database
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromDatabase:
+          name: client-management-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: client-management-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: client-management-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: client-management-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: client-management-db
+          property: password
+
+# Database
+databases:
+  - name: client-management-db
+    databaseName: client_management
+    user: client_user
+    plan: free
+    region: singapore
