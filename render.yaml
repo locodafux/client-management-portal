@@ -1,0 +1,93 @@
+# render.yaml
+databases:
+  - name: client-management-db
+    databaseName: client_management
+    user: client_user
+    plan: free
+    region: singapore
+    ipAllowList: [] # Allow all IPs
+
+services:
+  - type: web
+    name: client-management-portal
+    runtime: php
+    region: singapore
+    plan: free
+    buildCommand: |
+      composer install --no-dev --optimize-autoloader
+      npm install
+      npm run build
+      php artisan config:cache
+      php artisan route:cache
+      php artisan view:cache
+      php artisan migrate --force
+      php artisan db:seed --force
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: APP_NAME
+        value: Client Management Portal
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        sync: false
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromDatabase:
+          name: client-management-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: client-management-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: client-management-db
+          property: databaseName
+      - key: DB_USERNAME
+        fromDatabase:
+          name: client-management-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: client-management-db
+          property: password
+
+  - type: worker
+    name: queue-worker
+    runtime: php
+    region: singapore
+    plan: free
+    buildCommand: composer install --no-dev --optimize-autoloader
+    startCommand: php artisan queue:work --tries=3 --sleep=3 --max-time=3600
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromDatabase:
+          name: client-management-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: client-management-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: client-management-db
+          property: databaseName
+      - key: DB_USERNAME
+        fromDatabase:
+          name: client-management-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: client-management-db
+          property: password
