@@ -5,12 +5,11 @@ databases:
     user: client_user
     plan: free
     region: singapore
-    ipAllowList: [] # Allow all IPs
 
 services:
   - type: web
     name: client-management-portal
-    runtime: php
+    env: php
     region: singapore
     plan: free
     buildCommand: |
@@ -20,8 +19,6 @@ services:
       php artisan config:cache
       php artisan route:cache
       php artisan view:cache
-      php artisan migrate --force
-      php artisan db:seed --force
     startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
       - key: APP_NAME
@@ -31,7 +28,7 @@ services:
       - key: APP_DEBUG
         value: false
       - key: APP_KEY
-        sync: false
+        generateValue: true
       - key: QUEUE_CONNECTION
         value: database
       - key: DB_CONNECTION
@@ -47,7 +44,7 @@ services:
       - key: DB_DATABASE
         fromDatabase:
           name: client-management-db
-          property: databaseName
+          property: database
       - key: DB_USERNAME
         fromDatabase:
           name: client-management-db
@@ -59,7 +56,7 @@ services:
 
   - type: worker
     name: queue-worker
-    runtime: php
+    env: php
     region: singapore
     plan: free
     buildCommand: composer install --no-dev --optimize-autoloader
@@ -82,7 +79,7 @@ services:
       - key: DB_DATABASE
         fromDatabase:
           name: client-management-db
-          property: databaseName
+          property: database
       - key: DB_USERNAME
         fromDatabase:
           name: client-management-db
