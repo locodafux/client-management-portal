@@ -29,10 +29,10 @@ class Service extends Model
         return $query->where('is_active', false);
     }
 
-    // public function clients()
-    // {
-    //     return $this->belongsToMany(Client::class, 'client_service')
-    //                 ->withPivot('status', 'assigned_at')
-    //                 ->withTimestamps();
-    // }
+      public function clients()
+    {
+        return $this->belongsToMany(Client::class, 'client_service')
+                    ->withPivot('status')
+                    ->withTimestamps();
+    }
 }

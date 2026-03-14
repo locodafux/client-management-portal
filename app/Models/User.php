@@ -73,4 +73,9 @@ class User extends Authenticatable
     {
         return $query->where('is_active', true);
     }
+
+    public function assignedClients()
+    {
+        return $this->hasMany(Client::class, 'assigned_staff_id');
+    }
 }

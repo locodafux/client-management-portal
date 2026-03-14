@@ -80,7 +80,7 @@ export default function Dashboard({ auth }) {
                                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                     {user.role !== 'staff' && (
                                         <Link
-                                            // href={route('clients.create')}
+                                            href={route('clients.create')}
                                             className="block p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100"
                                         >
                                             <h5 className="font-medium text-blue-800">Add New Client</h5>
@@ -109,7 +109,7 @@ export default function Dashboard({ auth }) {
                                     )}
                                     
                                     <Link
-                                        // href={route('clients.index')}
+                                        href={route('clients.index')}
                                         className="block p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100"
                                     >
                                         <h5 className="font-medium text-gray-800">View Clients</h5>

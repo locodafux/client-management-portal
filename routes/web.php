@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +38,20 @@ Route::middleware(['auth', 'role:admin,manager'])->group(function () {
     Route::put('/services/{service}', [ServiceController::class, 'update'])->name('services.update');
     Route::patch('/services/{service}/toggle-active', [ServiceController::class, 'toggleActive'])->name('services.toggle-active');
     Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
+    
+    Route::middleware(['role:admin,manager'])->group(function () {
+        Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
+        Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
+        Route::get('/clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
+        Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
+        Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
+        Route::patch('/clients/{client}/services/{service}', [ClientController::class, 'updateServiceStatus'])
+            ->name('clients.services.update');
+    });
 });
 
 Route::middleware('auth')->group(function () {
