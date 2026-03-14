@@ -1,11 +1,4 @@
-# render.yaml
-databases:
-  - name: client-management-db
-    databaseName: client_management
-    user: client_user
-    plan: free
-    region: singapore
-
+# render.yaml - Simplified Version
 services:
   - type: web
     name: client-management-portal
@@ -31,28 +24,6 @@ services:
         generateValue: true
       - key: QUEUE_CONNECTION
         value: database
-      - key: DB_CONNECTION
-        value: mysql
-      - key: DB_HOST
-        fromDatabase:
-          name: client-management-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: client-management-db
-          property: port
-      - key: DB_DATABASE
-        fromDatabase:
-          name: client-management-db
-          property: database
-      - key: DB_USERNAME
-        fromDatabase:
-          name: client-management-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: client-management-db
-          property: password
 
   - type: worker
     name: queue-worker
@@ -66,25 +37,3 @@ services:
         value: production
       - key: QUEUE_CONNECTION
         value: database
-      - key: DB_CONNECTION
-        value: mysql
-      - key: DB_HOST
-        fromDatabase:
-          name: client-management-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: client-management-db
-          property: port
-      - key: DB_DATABASE
-        fromDatabase:
-          name: client-management-db
-          property: database
-      - key: DB_USERNAME
-        fromDatabase:
-          name: client-management-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: client-management-db
-          property: password
