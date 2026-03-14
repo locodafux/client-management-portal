@@ -51,23 +51,33 @@ export default function Index({ clients, filters, auth, flash }) {
     const canEdit = auth.user.role !== 'staff';
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Clients
-                    </h2>
-                    {canEdit && (
-                        <Link
-                            href={route('clients.create')}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                        >
-                            Add New Client
-                        </Link>
-                    )}
-                </div>
-            }
-        >
+            <AuthenticatedLayout
+                header={
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                            Clients
+                        </h2>
+                        <div className="flex space-x-2">
+                            {canEdit && (
+                                <>
+                                    <Link
+                                        href={route('clients.import.create')}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                                    >
+                                        Import Clients
+                                    </Link>
+                                    <Link
+                                        href={route('clients.create')}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    >
+                                        Add New Client
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                }
+            >
             <Head title="Clients" />
 
             <div className="py-12">

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ClientImportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ClientController;
@@ -51,6 +52,12 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
         Route::patch('/clients/{client}/services/{service}', [ClientController::class, 'updateServiceStatus'])
             ->name('clients.services.update');
+
+        // Import routes    
+        Route::get('/clients/import/create', [ClientImportController::class, 'create'])->name('clients.import.create');
+        Route::post('/clients/import', [ClientImportController::class, 'store'])->name('clients.import.store');
+        Route::get('/clients/import/template', [ClientImportController::class, 'downloadTemplate'])
+            ->name('clients.import.template');
     });
 });
 
