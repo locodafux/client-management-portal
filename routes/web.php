@@ -53,11 +53,15 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/clients/{client}/services/{service}', [ClientController::class, 'updateServiceStatus'])
             ->name('clients.services.update');
 
-        // Import routes    
-        Route::get('/clients/import/create', [ClientImportController::class, 'create'])->name('clients.import.create');
-        Route::post('/clients/import', [ClientImportController::class, 'store'])->name('clients.import.store');
-        Route::get('/clients/import/template', [ClientImportController::class, 'downloadTemplate'])
-            ->name('clients.import.template');
+    Route::get('/clients/import', [ClientImportController::class, 'create'])->name('clients.import.create');
+    Route::post('/clients/import', [ClientImportController::class, 'store'])->name('clients.import.store');
+    Route::get('/clients/import/template', [ClientImportController::class, 'downloadTemplate'])->name('clients.import.template');
+    
+    Route::get('/imports/recent', [ClientImportController::class, 'recent'])->name('imports.recent');
+    Route::get('/imports/{import}/status', [ClientImportController::class, 'status'])->name('imports.status');
+    
+    Route::post('/imports/{import}/cancel', [ClientImportController::class, 'cancel'])->name('imports.cancel');
+    Route::post('/imports/{import}/retry', [ClientImportController::class, 'retry'])->name('imports.retry');
     });
 });
 

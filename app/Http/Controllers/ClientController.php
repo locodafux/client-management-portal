@@ -7,6 +7,7 @@ use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Import;
 
 class ClientController extends Controller
 {
@@ -17,12 +18,10 @@ class ClientController extends Controller
     {
         $query = Client::with(['assignedStaff', 'services']);
 
-        // Search functionality
         if ($request->has('search')) {
             $query->search($request->search);
         }
 
-        // Filter by status
         if ($request->has('status') && $request->status !== 'all') {
             $query->status($request->status);
         }
@@ -31,9 +30,27 @@ class ClientController extends Controller
                         ->paginate(10)
                         ->withQueryString();
 
+        // Get recent imports for the current user
+        $recentImports = Import::where('started_by', auth()->id())
+                            ->orderBy('created_at', 'desc')
+                            ->limit(5)
+                            ->get()
+                            ->map(function ($import) {
+                                return [
+                                    'id' => $import->id,
+                                    'filename' => $import->filename,
+                                    'status' => $import->status,
+                                    'imported_count' => $import->imported_count,
+                                    'skipped_count' => $import->skipped_count,
+                                    'error_message' => $import->error_message,
+                                    'created_at' => $import->created_at->diffForHumans(),
+                                ];
+                            });
+
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
             'filters' => $request->only(['search', 'status']),
+            'recentImports' => $recentImports, // This was missing!
         ]);
     }
 
