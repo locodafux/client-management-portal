@@ -1,0 +1,49 @@
+# render.yaml
+services:
+  - type: web
+    name: client-management-portal
+    runtime: php
+    region: oregon
+    plan: free
+    buildCommand: |
+      composer install --no-dev --optimize-autoloader
+      npm install
+      npm run build
+      php artisan config:cache
+      php artisan route:cache
+      php artisan view:cache
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: APP_NAME
+        value: Client Management Portal
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: DB_CONNECTION
+        value: mysql
+
+  - type: worker
+    name: queue-worker
+    runtime: php
+    region: oregon
+    plan: free
+    buildCommand: composer install --no-dev --optimize-autoloader
+    startCommand: php artisan queue:work --tries=3 --sleep=3 --max-time=3600
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: DB_CONNECTION
+        value: mysql
+
+databases:
+  - name: client-management-db
+    plan: free
+    databaseName: client_management
+    user: client_user
