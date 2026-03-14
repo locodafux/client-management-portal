@@ -80,7 +80,7 @@ export default function Dashboard({ auth }) {
                                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                     {user.role !== 'staff' && (
                                         <Link
-                                            href="#"
+                                            // href={route('clients.create')}
                                             className="block p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100"
                                         >
                                             <h5 className="font-medium text-blue-800">Add New Client</h5>
@@ -100,7 +100,7 @@ export default function Dashboard({ auth }) {
                                     
                                     {(user.role === 'admin' || user.role === 'manager') && (
                                         <Link
-                                            href="#"
+                                            href={route('services.index')}
                                             className="block p-4 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100"
                                         >
                                             <h5 className="font-medium text-green-800">Manage Services</h5>
@@ -109,12 +109,46 @@ export default function Dashboard({ auth }) {
                                     )}
                                     
                                     <Link
-                                        href="#"
+                                        // href={route('clients.index')}
                                         className="block p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100"
                                     >
                                         <h5 className="font-medium text-gray-800">View Clients</h5>
                                         <p className="text-sm text-gray-600">Browse all clients</p>
                                     </Link>
+                                </div>
+                            </div>
+
+                            {/* Stats Overview - Optional but nice */}
+                            <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+                                <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                                    <div className="px-4 py-5 sm:p-6">
+                                        <dt className="text-sm font-medium text-gray-500 truncate">
+                                            Total Clients
+                                        </dt>
+                                        <dd className="mt-1 text-3xl font-semibold text-gray-900">
+                                            0
+                                        </dd>
+                                    </div>
+                                </div>
+                                <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                                    <div className="px-4 py-5 sm:p-6">
+                                        <dt className="text-sm font-medium text-gray-500 truncate">
+                                            Active Services
+                                        </dt>
+                                        <dd className="mt-1 text-3xl font-semibold text-gray-900">
+                                            0
+                                        </dd>
+                                    </div>
+                                </div>
+                                <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                                    <div className="px-4 py-5 sm:p-6">
+                                        <dt className="text-sm font-medium text-gray-500 truncate">
+                                            Active Users
+                                        </dt>
+                                        <dd className="mt-1 text-3xl font-semibold text-gray-900">
+                                            0
+                                        </dd>
+                                    </div>
                                 </div>
                             </div>
                         </div>
