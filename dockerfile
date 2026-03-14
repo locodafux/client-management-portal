@@ -39,4 +39,4 @@ RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache || true
 RUN php artisan storage:link || true
 
 EXPOSE 9000
-CMD ["php-fpm"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
