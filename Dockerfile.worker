@@ -1,0 +1,25 @@
+FROM php:8.2-cli
+
+WORKDIR /var/www
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    curl \
+    libzip-dev
+
+# PHP extensions
+RUN docker-php-ext-install pdo pdo_mysql zip
+
+# Install composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy project
+COPY . .
+
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader
+
+# Start queue worker
+CMD php artisan queue:work --tries=3 --sleep=3

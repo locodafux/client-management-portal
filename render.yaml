@@ -2,31 +2,27 @@ services:
   - type: web
     name: client-management-portal
     runtime: docker
+    dockerfilePath: ./Dockerfile
     region: singapore
     plan: free
-    branch: main
     autoDeploy: true
 
     envVars:
-      - key: APP_NAME
-        value: Client Management Portal
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: false
       - key: APP_KEY
         generateValue: true
-      - key: LOG_CHANNEL
-        value: stderr
       - key: QUEUE_CONNECTION
         value: database
 
   - type: worker
-    name: laravel-queue-worker
+    name: client-management-queue
     runtime: docker
+    dockerfilePath: ./Dockerfile.worker
     region: singapore
     plan: free
-    startCommand: php artisan queue:work --tries=3 --sleep=3
 
     envVars:
       - key: APP_ENV
