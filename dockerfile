@@ -18,22 +18,18 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set working directory
 WORKDIR /var/www/html
-
-# Copy composer files
-COPY composer.json composer.lock ./
 
 # Set environment variables
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV COMPOSER_MEMORY_LIMIT=-1
 ENV COMPOSER_NO_INTERACTION=1
 
-# Skip diagnose and just install
-RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
-
-# Copy the rest of the application
+# Copy everything first
 COPY . .
+
+# Install dependencies (scripts will run now that artisan exists)
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
