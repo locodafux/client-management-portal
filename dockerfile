@@ -22,27 +22,20 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy composer files first (for better caching)
+# Copy composer files
 COPY composer.json composer.lock ./
 
-# Set memory limit for Composer
+# Show composer.json content (for debugging)
+RUN cat composer.json
+
+# Set memory limit
 ENV COMPOSER_MEMORY_LIMIT=-1
 
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Run install with verbose output
+RUN composer install --no-dev --optimize-autoloader --no-interaction --verbose
 
 # Copy the rest of the application
 COPY . .
-
-# Make sure public/build exists (it will from your local build)
-RUN ls -la public/build || echo "public/build not found"
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache || true
-
-# Create storage link
-RUN php artisan storage:link || true
 
 EXPOSE 9000
 CMD ["php-fpm"]
