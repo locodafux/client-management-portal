@@ -1,8 +1,8 @@
-# render.yaml - Simplified Version
+# render.yaml
 services:
   - type: web
     name: client-management-portal
-    env: php
+    runtime: php
     region: singapore
     plan: free
     buildCommand: |
@@ -27,7 +27,7 @@ services:
 
   - type: worker
     name: queue-worker
-    env: php
+    runtime: php
     region: singapore
     plan: free
     buildCommand: composer install --no-dev --optimize-autoloader
