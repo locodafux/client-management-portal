@@ -3,3 +3,4 @@ vendor
 .git
 .env
 storage/logs
+public/dist
