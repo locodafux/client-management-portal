@@ -1,13 +1,29 @@
+# render.yaml
+databases:
+  - name: client-management-db
+    databaseName: client_management
+    user: client_user
+    plan: free
+    region: singapore
+
 services:
-  # Your web service - spins down after inactivity (FREE)
+  # Web Service - Free tier (spins down after inactivity)
   - type: web
     name: client-management-portal
-    runtime: docker
-    dockerfilePath: ./Dockerfile
+    runtime: php
     region: singapore
     plan: free
-    autoDeploy: true
+    buildCommand: |
+      composer install --no-dev --optimize-autoloader
+      npm install
+      npm run build
+      php artisan config:cache
+      php artisan route:cache
+      php artisan view:cache
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
+      - key: APP_NAME
+        value: Client Management Portal
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
@@ -39,14 +55,15 @@ services:
           name: client-management-db
           property: password
 
-  # CRON JOB for queue processing (CHEAPEST option!)
+  # Cron Job for Queue Processing - Runs every 5 minutes (CHEAPEST!)
   - type: cron
     name: client-management-queue
-    runtime: docker
-    dockerfilePath: ./Dockerfile.worker
+    runtime: php
     region: singapore
     plan: free
-    schedule: "*/5 * * * *"  # Every 5 minutes (cheaper than every minute)
+    schedule: "*/5 * * * *"  # Every 5 minutes
+    buildCommand: composer install --no-dev --optimize-autoloader
+    command: php artisan queue:work --stop-when-empty --tries=3 --max-time=50
     envVars:
       - key: APP_ENV
         value: production
@@ -74,11 +91,3 @@ services:
         fromDatabase:
           name: client-management-db
           property: password
-
-# Database
-databases:
-  - name: client-management-db
-    databaseName: client_management
-    user: client_user
-    plan: free
-    region: singapore
