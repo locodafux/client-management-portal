@@ -53,7 +53,8 @@ RUN php artisan storage:link
 
 # Copy startup script
 COPY start.sh /start.sh
-RUN chmod +x /start.sh
+COPY start-worker.sh /start-worker.sh
+RUN chmod +x /start.sh /start-worker.sh
 
 EXPOSE ${PORT:-10000}
 
