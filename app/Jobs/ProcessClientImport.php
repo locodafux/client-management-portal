@@ -1,4 +1,5 @@
 <?php
+// app/Jobs/ProcessClientImport.php
 
 namespace App\Jobs;
 
@@ -8,9 +9,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QueuedClientsImport;
-use Throwable;
 
 class ProcessClientImport implements ShouldQueue
 {
@@ -21,7 +22,6 @@ class ProcessClientImport implements ShouldQueue
 
     public $tries = 5;
     public $backoff = 3;
-    public $timeout = 300;
 
     public function __construct(Import $import, $filePath)
     {
@@ -32,83 +32,79 @@ class ProcessClientImport implements ShouldQueue
     public function handle(): void
     {
         try {
-            $this->updateStatus('Processing');
+            $this->import->update(['status' => 'Processing']);
 
-            $fullPath = $this->getFilePath();
+            // Check if file exists with multiple attempts
+            $fullPath = $this->waitForFile();
             
-            if (!$fullPath || !file_exists($fullPath)) {
-                throw new \Exception("File not found: " . $this->filePath);
+            if (!$fullPath) {
+                throw new \Exception("File not found after multiple attempts: " . $this->filePath);
             }
 
-            Log::info('Processing import', [
+            Log::info('Processing import file', [
                 'import_id' => $this->import->id,
-                'file' => $fullPath
+                'file_path' => $fullPath,
+                'file_size' => filesize($fullPath)
             ]);
 
+            // Process the file
             $importHandler = new QueuedClientsImport($this->import);
             Excel::import($importHandler, $fullPath);
 
-            $this->updateStatus('Completed', [
+            // Update with results
+            $this->import->update([
+                'status' => 'Completed',
                 'imported_count' => $importHandler->getImportedCount(),
                 'skipped_count' => $importHandler->getSkippedCount(),
             ]);
 
+            // Clean up file
             if (file_exists($fullPath)) {
                 unlink($fullPath);
-                Log::info('File deleted after import', ['import_id' => $this->import->id]);
             }
+            
+            Log::info('Import completed', [
+                'import_id' => $this->import->id,
+                'imported' => $importHandler->getImportedCount(),
+                'skipped' => $importHandler->getSkippedCount()
+            ]);
 
-        } catch (Throwable $e) {
-            $this->updateStatus('Failed', [
-                'error_message' => $e->getMessage()
+        } catch (\Exception $e) {
+            $this->import->update([
+                'status' => 'Failed',
+                'error_message' => $e->getMessage(),
             ]);
 
             Log::error('Import failed', [
                 'import_id' => $this->import->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'file_path' => $this->filePath
             ]);
 
             throw $e;
         }
     }
 
-    public function failed(Throwable $e): void
+    /**
+     * Wait for file to be available - FIXED PATH
+     */
+    private function waitForFile()
     {
-        $this->updateStatus('Failed', [
-            'error_message' => 'Max retries exceeded: ' . $e->getMessage()
-        ]);
-
-        Log::error('Import failed permanently', [
-            'import_id' => $this->import->id,
-            'error' => $e->getMessage()
-        ]);
-    }
-
-    private function updateStatus(string $status, array $extra = []): void
-    {
-        try {
-            $this->import->update(array_merge(['status' => $status], $extra));
-        } catch (Throwable $e) {
-            Log::error('Failed to update import status', [
-                'import_id' => $this->import->id,
-                'status' => $status,
-                'error' => $e->getMessage()
-            ]);
-        }
-    }
-
-    private function getFilePath(): ?string
-    {
+        $attempts = 0;
+        $maxAttempts = 10;
+        
+        // FIX: Files are in storage/app/private/imports/
         $fullPath = storage_path('app/private/' . $this->filePath);
         
-        if (file_exists($fullPath)) {
-            return $fullPath;
-        }
-        
-        $altPath = storage_path('app/' . $this->filePath);
-        if (file_exists($altPath)) {
-            return $altPath;
+        while ($attempts < $maxAttempts) {
+            if (file_exists($fullPath)) {
+                Log::info('File found at: ' . $fullPath);
+                return $fullPath;
+            }
+            
+            $attempts++;
+            Log::warning("Waiting for file at {$fullPath}, attempt {$attempts}/{$maxAttempts}");
+            sleep(2);
         }
         
         return null;
