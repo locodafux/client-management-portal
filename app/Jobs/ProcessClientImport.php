@@ -59,7 +59,9 @@ class ProcessClientImport implements ShouldQueue
             ]);
 
             // Clean up file
-            Storage::disk('local')->delete($this->filePath);
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
             
             Log::info('Import completed', [
                 'import_id' => $this->import->id,
@@ -84,21 +86,25 @@ class ProcessClientImport implements ShouldQueue
     }
 
     /**
-     * Wait for file to be available (handles slow filesystems)
+     * Wait for file to be available - FIXED PATH
      */
     private function waitForFile()
     {
         $attempts = 0;
         $maxAttempts = 10;
         
+        // FIX: Files are in storage/app/private/imports/
+        $fullPath = storage_path('app/private/' . $this->filePath);
+        
         while ($attempts < $maxAttempts) {
-            if (Storage::disk('local')->exists($this->filePath)) {
-                return Storage::disk('local')->path($this->filePath);
+            if (file_exists($fullPath)) {
+                Log::info('File found at: ' . $fullPath);
+                return $fullPath;
             }
             
             $attempts++;
-            Log::warning("Waiting for file, attempt {$attempts}/{$maxAttempts}");
-            sleep(2); // Wait 2 seconds between checks
+            Log::warning("Waiting for file at {$fullPath}, attempt {$attempts}/{$maxAttempts}");
+            sleep(2);
         }
         
         return null;
