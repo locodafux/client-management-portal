@@ -1,3 +1,16 @@
+# Stage 1 - Build Frontend (Vite)
+FROM node:18 AS frontend
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of the app and build
+COPY . .
+RUN npm run build
+
+# Stage 2 - Backend (PHP)
 FROM php:8.2-fpm
 
 # Install system dependencies including PostgreSQL client libs
@@ -22,20 +35,26 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copy everything (including pre-built public/build)
+# Copy application files
 COPY . .
 
-# Install dependencies
+# Copy built frontend from Stage 1
+COPY --from=frontend /app/public/build /var/www/html/public/build
+
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build || true
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build || true
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build
 
 # Create storage link
-RUN php artisan storage:link || true
+RUN php artisan storage:link
 
+# Copy startup script
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
+
+EXPOSE ${PORT:-10000}
 
 CMD ["/start.sh"]
