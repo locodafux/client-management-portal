@@ -7,7 +7,8 @@ echo "========================================"
 echo "Current directory: $(pwd)"
 echo "PHP Version: $(php -v | head -n 1)"
 echo "========================================"
-
+export HTTPS=true
+export REQUEST_SCHEME=https
 # Set display errors for debugging (remove in production)
 sed -i 's/display_errors = Off/display_errors = On/g' /usr/local/etc/php/php.ini-production
 cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
