@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions - ADD pdo_pgsql and pgsql
+# Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
     && docker-php-ext-install pdo_pgsql pgsql
 
@@ -22,22 +22,20 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copy everything
+# Copy everything (including pre-built public/build)
 COPY . .
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache || true
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build || true
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build || true
 
 # Create storage link
 RUN php artisan storage:link || true
 
-# Copy the startup script
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Use the startup script
 CMD ["/start.sh"]
