@@ -2,13 +2,15 @@
 # start.sh
 
 echo "========================================"
-echo "🚀 Starting Laravel application..."
+echo "🚀 Starting Laravel application with QUEUE WORKER..."
 echo "========================================"
 echo "Current directory: $(pwd)"
 echo "PHP Version: $(php -v | head -n 1)"
 echo "========================================"
+
 export HTTPS=true
 export REQUEST_SCHEME=https
+
 # Set display errors for debugging (remove in production)
 sed -i 's/display_errors = Off/display_errors = On/g' /usr/local/etc/php/php.ini-production
 cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
@@ -45,7 +47,7 @@ fi
 echo "🔄 Running migrations..."
 php artisan migrate --force
 
-# Run seeders (only if no users exist)
+# Run seeders
 echo "🌱 Running seeders..."
 php artisan db:seed --force
 
@@ -61,9 +63,14 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
+# ===== NEW: Start Queue Worker in Background =====
+echo "🔄 Starting queue worker in background..."
+php artisan queue:work --tries=3 --daemon &
+echo "✅ Queue worker started with PID: $!"
+
 echo "========================================"
 echo "✅ Setup complete! Starting server..."
 echo "========================================"
 
-# Start Laravel server
+# Start Laravel server (this will keep running)
 exec php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
