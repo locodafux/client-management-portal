@@ -9,13 +9,13 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    libpq-dev \  # <-- ADD THIS for PostgreSQL
+    libpq-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions - ADD pdo_pgsql and pgsql
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
-    && docker-php-ext-install pdo_pgsql pgsql  # <-- ADD THESE
+    && docker-php-ext-install pdo_pgsql pgsql
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
