@@ -35,5 +35,9 @@ RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache || true
 # Create storage link
 RUN php artisan storage:link || true
 
-# Use Laravel's built-in server
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
+# Copy the startup script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Use the startup script
+CMD ["/start.sh"]
