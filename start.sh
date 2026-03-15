@@ -15,6 +15,12 @@ export REQUEST_SCHEME=https
 sed -i 's/display_errors = Off/display_errors = On/g' /usr/local/etc/php/php.ini-production
 cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
 
+# Create necessary directories
+echo "📁 Creating storage directories..."
+mkdir -p storage/app/imports storage/logs bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+echo "✅ Directories ready"
+
 # Wait for database to be ready
 echo "⏳ Waiting for database connection..."
 max_attempts=30
@@ -63,10 +69,20 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# ===== NEW: Start Queue Worker in Background =====
+# ===== Start Queue Worker in Background =====
 echo "🔄 Starting queue worker in background..."
 php artisan queue:work --tries=3 --daemon &
-echo "✅ Queue worker started with PID: $!"
+WORKER_PID=$!
+echo "✅ Queue worker started with PID: $WORKER_PID"
+
+# Verify worker is running
+sleep 2
+if kill -0 $WORKER_PID 2>/dev/null; then
+    echo "✅ Worker is running successfully"
+else
+    echo "⚠️ Worker failed to start. Checking logs..."
+    tail -n 20 storage/logs/laravel.log || true
+fi
 
 echo "========================================"
 echo "✅ Setup complete! Starting server..."

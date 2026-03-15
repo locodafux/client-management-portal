@@ -35,6 +35,11 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+# Create necessary directories
+RUN mkdir -p storage/app/imports storage/logs bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache || true
+
 # Copy application files
 COPY . .
 
@@ -44,16 +49,20 @@ COPY --from=frontend /app/public/build /var/www/html/public/build
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# Set proper permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build
+# Set proper permissions for all directories
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build || true
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build || true
 
 # Create storage link
-RUN php artisan storage:link
+RUN php artisan storage:link || true
 
-# Copy startup script
+# Copy startup scripts
 COPY start.sh /start.sh
-RUN chmod +x /start.sh
+COPY start-worker.sh /start-worker.sh 2>/dev/null || true
+
+# Set execute permissions
+RUN chmod +x /start.sh || true
+RUN if [ -f /start-worker.sh ]; then chmod +x /start-worker.sh; fi
 
 EXPOSE ${PORT:-10000}
 
