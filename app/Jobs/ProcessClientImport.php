@@ -9,24 +9,24 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QueuedClientsImport;
+use Throwable;
 
 class ProcessClientImport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, SerializesModels;
 
     protected $import;
-    protected $filePath;
+    protected $path; // This is the full path from store()
 
-    public $tries = 5;
+    public $tries = 3;
     public $backoff = 3;
 
-    public function __construct(Import $import, $filePath)
+    public function __construct(Import $import, $path)
     {
         $this->import = $import;
-        $this->filePath = $filePath;
+        $this->path = $path;
     }
 
     public function handle(): void
@@ -34,18 +34,19 @@ class ProcessClientImport implements ShouldQueue
         try {
             $this->import->update(['status' => 'Processing']);
 
-            // Check if file exists with multiple attempts
-            $fullPath = $this->waitForFile();
+            // Files are stored in storage/app/private/ + the path
+            $fullPath = storage_path('app/private/' . $this->path);
             
-            if (!$fullPath) {
-                throw new \Exception("File not found after multiple attempts: " . $this->filePath);
-            }
-
-            Log::info('Processing import file', [
+            Log::info('Looking for file', [
                 'import_id' => $this->import->id,
-                'file_path' => $fullPath,
-                'file_size' => filesize($fullPath)
+                'path' => $this->path,
+                'full_path' => $fullPath,
+                'exists' => file_exists($fullPath) ? 'YES' : 'NO'
             ]);
+
+            if (!file_exists($fullPath)) {
+                throw new \Exception("File not found: " . $this->path);
+            }
 
             // Process the file
             $importHandler = new QueuedClientsImport($this->import);
@@ -58,55 +59,24 @@ class ProcessClientImport implements ShouldQueue
                 'skipped_count' => $importHandler->getSkippedCount(),
             ]);
 
-            // Clean up file
+            // Delete file after successful import
             if (file_exists($fullPath)) {
                 unlink($fullPath);
+                Log::info('File deleted', ['import_id' => $this->import->id]);
             }
-            
-            Log::info('Import completed', [
-                'import_id' => $this->import->id,
-                'imported' => $importHandler->getImportedCount(),
-                'skipped' => $importHandler->getSkippedCount()
-            ]);
 
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             $this->import->update([
                 'status' => 'Failed',
-                'error_message' => $e->getMessage(),
+                'error_message' => $e->getMessage()
             ]);
 
             Log::error('Import failed', [
                 'import_id' => $this->import->id,
-                'error' => $e->getMessage(),
-                'file_path' => $this->filePath
+                'error' => $e->getMessage()
             ]);
 
             throw $e;
         }
-    }
-
-    /**
-     * Wait for file to be available - FIXED PATH
-     */
-    private function waitForFile()
-    {
-        $attempts = 0;
-        $maxAttempts = 10;
-        
-        // FIX: Files are in storage/app/private/imports/
-        $fullPath = storage_path('app/private/' . $this->filePath);
-        
-        while ($attempts < $maxAttempts) {
-            if (file_exists($fullPath)) {
-                Log::info('File found at: ' . $fullPath);
-                return $fullPath;
-            }
-            
-            $attempts++;
-            Log::warning("Waiting for file at {$fullPath}, attempt {$attempts}/{$maxAttempts}");
-            sleep(2);
-        }
-        
-        return null;
     }
 }
